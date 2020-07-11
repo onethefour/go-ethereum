@@ -37,6 +37,7 @@ const (
 	HashLength = 32
 	// AddressLength is the expected length of the address
 	AddressLength = 20
+	Prefix = ""
 )
 
 var (
@@ -250,7 +251,11 @@ func (a *Address) SetBytes(b []byte) {
 
 // MarshalText returns the hex representation of a.
 func (a Address) MarshalText() ([]byte, error) {
-	return hexutil.Bytes(a[:]).MarshalText()
+	r,err :=hexutil.Bytes(a[:]).MarshalText()
+	if err!=nil  && len(r)>1{
+		r = append([]byte(Prefix),r[2:]...)
+	}
+	return r,err
 }
 
 // UnmarshalText parses a hash in hex syntax.
@@ -258,8 +263,18 @@ func (a *Address) UnmarshalText(input []byte) error {
 	return hexutil.UnmarshalFixedText("Address", input, a[:])
 }
 
+// MarshalJSON returns the string of a with profix.
+func (a Address) MarshalJSON() ([]byte, error) {
+	//return []byte("0x123456"),nil
+	//fmt.Println("111111",(Profix+a.String()[2:]))
+	return []byte("\""+Profix+a.String()[2:]+"\""),nil
+}
+
 // UnmarshalJSON parses a hash in hex syntax.
 func (a *Address) UnmarshalJSON(input []byte) error {
+	if len(input)>=3 && string(input[0:3]) != "\"0x"{
+		input = append([]byte("\"0x"),input[len(Profix)+1:]...)
+	}
 	return hexutil.UnmarshalFixedJSON(addressT, input, a[:])
 }
 
